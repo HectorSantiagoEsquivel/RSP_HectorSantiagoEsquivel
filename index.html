@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segundo Recuperatorio</title>
+</head>
+
+<body class="main-content">
+    <div class="contenedor-tabla" id="contenedor-tabla">
+        <div class="row division">
+            <h3>Form datos</h3>
+            <button onclick="abrirFormulario()">Agregar vehiculo</button>
+        </div>
+
+        <div id="checkbox-columnas" class="row">
+            <label class="mostrar-label">Mostrar columnas: </label>
+        </div>
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th id="cabecera-id" columna="id">id</th>
+                    <th id="cabecera-modelo" columna="modelo">modelo</th>
+                    <th id="cabecera-anoFab" columna="anoFab">año</th>
+                    <th id="cabecera-velMax" columna="velMax">velocidad maxima</th>
+                    <th id="cabecera-altMax" columna="altMax">altura maxima</th>
+                    <th id="cabecera-autonomia" columna="autonomia">autonomia</th>
+                    <th id="cabecera-cantPue" columna="cantPue">cantidad Puertas</th>
+                    <th id="cabecera-cantRue" columna="cantRue">cantidad Ruedas</th>
+                    <th id="cabecera-modificar" columna="modificar">modificar</th>
+                    <th id="cabecera-eliminar" columna="eliminar">eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="filas-tabla"></tbody>
+        </table>
+    </div>
+    <div id="loader-container">
+        <div id="loader" class="loader"></div>
+        <div id="content-cover" class="content-cover"></div>
+    </div>
+
+
+    <div class="contenedor-form" id="abm-form">
+        Formulario ABM
+        <select id="tipo-input" onchange="seleccionarTipoVehiculo()">
+            <option value="1">Aereo</option>
+            <option value="2">Terrestre</option>
+        </select>
+        <input id="id-input" hidden type="number">
+        <input class="text-input" id="modelo-input" type="text" placeholder="Ingrese modelo"><br>
+        <input class="text-input" id="anoFab-input" type="number" placeholder="Ingrese anoFab"><br>
+        <input class="text-input" id="velMax-input" type="number" placeholder="Ingrese velMax"><br>
+        <input class="text-input" id="altMax-input" type="number" placeholder="Ingrese altMax"><br>
+        <input class="text-input" id="autonomia-input" type="number" placeholder="Ingrese autonomia"><br>
+        <input class="text-input" id="cantPue-input" type="number" placeholder="Ingrese cantPue"><br>
+        <input class="text-input" id="cantRue-input" type="number" placeholder="Ingrese cantRue"><br>
+        <div class="row-button">
+            <button class="cancel-button" onclick="abrirTabla()">
+                Cancelar
+            </button>
+            <button onclick="aceptarAccion()">
+                Aceptar
+            </button>
+        </div>
+    </div>
+    
+</body>
+
+<script src="Vehiculo.js"></script>
+<script src="Aereo.js"></script>
+<script src="Terrestre.js"></script>
+<script src="index.js"></script>
+
+<style>
+/* Reset general */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Estilos aplicados */
+:root {
+    --main-bg-color: #f3f3f3;
+    --text-color: #333333;
+    --border-color: #cccccc;
+    --primary-color: #ff6b6b;
+    --secondary-color: #f9d56e;
+    --tertiary-color: #70a1ff;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--main-bg-color);
+    color: var(--text-color);
+}
+
+.contenedor-form {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    border-radius: 8px;
+    min-width: 300px;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.text-input {
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 3px var(--primary-color);
+}
+
+.row-button {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.cancel-button {
+    margin-right: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--tertiary-color);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cancel-button:hover {
+    background-color: #5c88fc;
+}
+
+.accept-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.accept-button:hover {
+    background-color: #ff8787;
+}
+
+.loader {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -20px;
+    margin-left: -20px;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 10;
+}
+
+.content-cover {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    z-index: 10000;
+    display: none;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.fila-generada:hover {
+    background-color: #eeeeee;
+}
+
+.contenedor-tabla {
+    border: 1px solid var(--border-color);
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
+    width: 1200px;
+    padding: 16px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tabla {
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 900px;
+}
+
+.division {
+    justify-content: space-between;
+    align-items: center;
+}
+
+th {
+    padding: 8px;
+    background-color: var(--secondary-color);
+}
+
+td {
+    padding: 8px;
+    text-align: center;
+}
+</style>
+
+
+</html>
