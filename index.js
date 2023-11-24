@@ -14,24 +14,23 @@ formulario.style.display = 'none';
 const contentCover = $('content-cover');
 let listaVehiculos;
 
-//helper
+
 const contenedorCheckboxes = $('checkbox-columnas');
 COLUMNAS.map(columna => {
-    const modelo = document.createElement('label');
+    const nombre = document.createElement('label');
     const checkbox = document.createElement('input');
-    modelo.textContent = columna;
-    modelo.style.marginLeft = '10px';
+    nombre.textContent = columna;
+    nombre.style.marginLeft = '10px';
     checkbox.setAttribute('type', 'checkbox');
     checkbox.setAttribute('checked', 'true');
     checkbox.setAttribute('id', `checkbox-${columna}`);
 
     if (columna !== 'modificar' && columna !== 'eliminar') {
-        contenedorCheckboxes.appendChild(modelo);
+        contenedorCheckboxes.appendChild(nombre);
         contenedorCheckboxes.appendChild(checkbox);
     }
 });
 
-//helper
 const cambiarVisibilidadColumnas = () => {
     COLUMNAS.map(columna => {
         const filas = document.querySelectorAll(`#celda-${columna}`);
@@ -49,7 +48,7 @@ const cambiarVisibilidadColumnas = () => {
     });
 }
 
-//helper
+
 const generarStatusPorDefecto = (prop) => {
     const checkbox = document.querySelector(`#checkbox-${prop}`);
     const columna = document.querySelector(`#cabecera-${prop}`);
@@ -198,7 +197,7 @@ const cargarDatosDesdeAPI = () => {
                 listaVehiculos = convertirObjetoATipoVehiculo(response);
                 generarFilas(listaVehiculos);
             } else {
-                alert("Ocurrio un error");
+                alert("ERROR");
             }
         }
     };
@@ -257,11 +256,11 @@ const aceptarAccion = async () => {
     const anoFab = $('anoFab-input').value.trim();
     const velMax = parseInt($('velMax-input').value);
 
-    // opc 1
+
     const altMax = $('altMax-input').value;
     const autonomia = $('autonomia-input').value;
 
-    // opc2
+
     const cantPue = $('cantPue-input').value;
     const cantRue = $('cantRue-input').value;
 
