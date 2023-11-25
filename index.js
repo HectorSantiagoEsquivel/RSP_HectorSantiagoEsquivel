@@ -185,7 +185,7 @@ const manejarLoader = (estado = 'block') => {
     contentCover.style.display = estado;
 }
 
-const cargarDatosDesdeAPI = () => {
+/*const cargarDatosDesdeAPI = () => {
     const xhr = new XMLHttpRequest();
 
     xhr.open('GET', ENDPOINT);
@@ -204,9 +204,46 @@ const cargarDatosDesdeAPI = () => {
 
     manejarLoader();
     xhr.send();
-}
+}*/
 
-cargarDatosDesdeAPI();
+
+const generarJerarquiaDesdePhp = () => {
+    manejarLoader(); 
+
+    fetch(ENDPOINT)
+        .then(response => {
+            manejarLoader('none'); 
+            if (response.ok) {
+                return response.text(); // Obtener la cadena de texto del cuerpo de la respuesta
+            } else {
+                throw new Error('No se pudo obtener la cadena de PHP');
+            }
+        })
+        .then(data => {
+            // Procesar la cadena PHP para construir la jerarquía de clases
+            const objetos = JSON.parse(data.replace(/(\r\n|\n|\r)/gm, "")); // Eliminar saltos de línea
+
+            listaVehiculos = objetos.map(obj => {
+                if (obj.autonomia !== undefined) {
+                    return new Aereo(obj.id, obj.modelo, obj.anoFab, obj.velMax, obj.altMax, obj.autonomia);
+                } else {
+                    return new Terrestre(obj.id, obj.modelo, obj.anoFab, obj.velMax, obj.cantPue, obj.cantRue);
+                }
+            });
+
+
+            generarFilas(listaVehiculos);
+        })
+        .catch(error => {
+            manejarLoader('none'); 
+            console.error('Error:', error);
+        });
+};
+
+generarJerarquiaDesdePhp();
+
+
+//cargarDatosDesdeAPI();
 
 const abrirFormulario = (estaEditando, tipoAereo) => {
     seleccionarTipoVehiculo(estaEditando, tipoAereo);
@@ -250,17 +287,58 @@ const abrirTabla = () => {
 }
 
 
-const aceptarAccion = async () => {
+const generarIdVehiculo = () => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', ENDPOINT);
+    xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                const nuevoID = data.id;
+                $('id-input').value = nuevoID;
+            } else {
+                alert('No se pudo obtener el nuevo ID del vehículo');
+            }
+        }
+    };
+    xhr.send();
+};
+
+const bloquearCampos = (estaEditando, tipoAereo) => {
+    $('id-input').readOnly = true;
+
+    const esAereo = $('tipo-input').value === '1';
+    if ((esAereo && !estaEditando) || (estaEditando && tipoAereo !== 'N/A')) {
+        $('altMax-input').style.display = 'block';
+        $('autonomia-input').style.display = 'block';
+        $('cantPue-input').style.display = 'none';
+        $('cantRue-input').style.display = 'none';
+    } else {
+        $('altMax-input').style.display = 'none';
+        $('autonomia-input').style.display = 'none';
+        $('cantPue-input').style.display = 'block';
+        $('cantRue-input').style.display = 'block';
+    }
+};
+
+const mostrarFormularioAlta = (estaEditando, tipoAereo) => {
+    bloquearCampos(estaEditando, tipoAereo);
+    $('abm-form').style.display = 'flex';
+    $('contenedor-tabla').style.display = 'none';
+};
+
+const ocultarFormularioAlta = () => {
+    $('abm-form').style.display = 'none';
+    $('contenedor-tabla').style.display = 'block';
+};
+
+const aceptarAccion = () => {
     const idVehiculo = $('id-input').value;
     const modelo = $('modelo-input').value.trim();
     const anoFab = $('anoFab-input').value.trim();
     const velMax = parseInt($('velMax-input').value);
-
-
     const altMax = $('altMax-input').value;
     const autonomia = $('autonomia-input').value;
-
-
     const cantPue = $('cantPue-input').value;
     const cantRue = $('cantRue-input').value;
 
@@ -275,7 +353,7 @@ const aceptarAccion = async () => {
             anoFab,
             velMax,
             altMax,
-            autonomia,
+            autonomia
         );
     } else {
         nuevoVehiculo = new Terrestre(
@@ -284,94 +362,154 @@ const aceptarAccion = async () => {
             anoFab,
             velMax,
             cantPue,
-            cantRue,
+            cantRue
         );
     }
 
-    if (modelo.length > 0 && anoFab> 1885 && velMax > 0 &&
+    if (
+        modelo.length > 0 &&
+        anoFab > 1885 &&
+        velMax > 0 &&
         ((nuevoVehiculo instanceof Aereo && altMax > 0 && autonomia > 0) ||
-        (nuevoVehiculo instanceof Terrestre && cantPue > -1 && cantRue > 0))
+            (nuevoVehiculo instanceof Terrestre && cantPue > -1 && cantRue > 0))
     ) {
-
         manejarLoader();
-        if (idVehiculoGenerado) {
 
-            modificarVehiculo(nuevoVehiculo, idVehiculoGenerado)
-                .then(() => {
-                    abrirTabla();
-                })
-                .catch(error => {
-                    abrirTabla();
+        if (!idVehiculoGenerado) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', ENDPOINT);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
                     manejarLoader('none');
-                    alert("Ocurrió un error al actualizar los datos: " + error.message);
-                });
-
-        } else {
-
-            try {
-                const response = await fetch(ENDPOINT, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(nuevoVehiculo)
-                });
-
-                manejarLoader('none');
-
-                if (!response.ok) {
-                    abrirTabla();
-                    throw new Error('No se pudo realizar la operación');
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        const nuevoID = data.id;
+                        nuevoVehiculo = {
+                            ...nuevoVehiculo,
+                            id: nuevoID
+                        };
+                        listaVehiculos = [...listaVehiculos, nuevoVehiculo];
+                        generarFilas(listaVehiculos);
+                        ocultarFormularioAlta();
+                    } else {
+                        ocultarFormularioAlta();
+                        alert('No se pudo realizar la operación');
+                    }
                 }
-
-                const data = await response.json();
-                const nuevoID = data.id;
-                nuevoVehiculo = {
-                    ...nuevoVehiculo,
-                    id: nuevoID
-                };
-                listaVehiculos = [...listaVehiculos, nuevoVehiculo];
-
-                generarFilas(listaVehiculos);
-                abrirTabla();
-            } catch (error) {
-                abrirTabla();
-                manejarLoader('none');
-                alert("Ocurrio un error: " + error);
-            }
+            };
+            xhr.send(JSON.stringify(nuevoVehiculo));
         }
-
-
     } else {
-        alert("Uno de los valores no es valido");
+        alert('Uno de los valores no es válido');
     }
+};
 
-}
+const mostrarFormularioModificacion = (datos) => {
+    $('id-input').value = datos.id || '';
+    $('modelo-input').value = datos.modelo || '';
+    $('anoFab-input').value = datos.anoFab || '';
+    $('velMax-input').value = datos.velMax || '';
+    $('altMax-input').value = datos.altMax || '';
+    $('autonomia-input').value = datos.autonomia || '';
+    $('cantPue-input').value = datos.cantPue || '';
+    $('cantRue-input').value = datos.cantRue || '';
 
+    // Determinar tipo de vehículo y mostrar los campos correspondientes
+    $('tipo-input').value = datos?.autonomia !== 'N/A' ? '1' : '2';
+    seleccionarTipoVehiculo(true, datos?.autonomia);
+
+    $('abm-form').style.display = 'flex';
+    $('contenedor-tabla').style.display = 'none';
+};
 
 const modificarVehiculo = (nuevoVehiculo, idVehiculoGenerado) => {
-    return new Promise((resolve, reject) => {
-        fetch(ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(nuevoVehiculo)
+    return fetch(ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(nuevoVehiculo)
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('No se pudo realizar la operación');
+            }
+            return response.json();
         })
-            .then(response => {
-                if (!response.ok) {
-                    reject(new Error('No se pudo realizar la operación'));
+        .then(data => {
+            const vehiculoActualizado = {
+                ...nuevoVehiculo,
+                id: data.id
+            };
+            listaVehiculos = listaVehiculos.map(vehiculo => {
+                if (vehiculo.id === idVehiculoGenerado) {
+                    return vehiculoActualizado;
                 }
-                return response;
-            })
-            .then(data => {
-                listaVehiculos = [...listaVehiculos.filter(p => p.id !== idVehiculoGenerado), nuevoVehiculo];
-                generarFilas(listaVehiculos);
-                manejarLoader('none');
-                resolve();
+                return vehiculo;
+            });
+            generarFilas(listaVehiculos);
+            manejarLoader('none');
+            return vehiculoActualizado;
+        })
+        .catch(error => {
+            manejarLoader('none');
+            throw new Error(error);
+        });
+};
+
+const aceptarModificacion = () => {
+    const idVehiculo = $('id-input').value;
+    const modelo = $('modelo-input').value.trim();
+    const anoFab = $('anoFab-input').value.trim();
+    const velMax = parseInt($('velMax-input').value);
+    const altMax = $('altMax-input').value;
+    const autonomia = $('autonomia-input').value;
+    const cantPue = $('cantPue-input').value;
+    const cantRue = $('cantRue-input').value;
+
+    const esAereo = $('tipo-input').value === '1';
+    const idVehiculoGenerado = parseInt(idVehiculo) || 0;
+    let nuevoVehiculo;
+
+    if (esAereo) {
+        nuevoVehiculo = new Aereo(
+            idVehiculoGenerado,
+            modelo,
+            anoFab,
+            velMax,
+            altMax,
+            autonomia
+        );
+    } else {
+        nuevoVehiculo = new Terrestre(
+            idVehiculoGenerado,
+            modelo,
+            anoFab,
+            velMax,
+            cantPue,
+            cantRue
+        );
+    }
+
+    if (
+        modelo.length > 0 &&
+        anoFab > 1885 &&
+        velMax > 0 &&
+        ((nuevoVehiculo instanceof Aereo && altMax > 0 && autonomia > 0) ||
+            (nuevoVehiculo instanceof Terrestre && cantPue > -1 && cantRue > 0))
+    ) {
+        manejarLoader();
+
+        modificarVehiculo(nuevoVehiculo, idVehiculoGenerado)
+            .then(() => {
+                ocultarFormularioAlta();
             })
             .catch(error => {
-                reject(error);
+                manejarLoader('none');
+                alert('No se pudo realizar la operación');
             });
-    });
+    } else {
+        alert('Uno de los valores no es válido');
+    }
 };
